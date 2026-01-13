@@ -2,6 +2,10 @@ __pycache__/
 *.pyc
 .DS_Store
 venv/
+.venv/
+/tests/output
+/tests/data
+
 .env
 test_input.mp4
 test_output.mp4
