@@ -36,21 +36,29 @@ class LicensePlateDetector:
 
     def detect(self, frame):
         """
-        Detects license plates in the frame.
+        Detects and tracks license plates in the frame.
         Returns a list of bounding boxes [x1, y1, x2, y2].
         """
-        # Run inference
-        results = self.model(frame, verbose=False)
+        # Run inference with tracking
+        # imgsz=1280 to detect smaller/distant plates
+        # conf=0.15 to catch tilted/blurry plates
+        # persist=True is crucial for tracking to maintain IDs across frames
+        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", imgsz=1280, conf=0.15, verbose=False)
         
         boxes = []
         for result in results:
             for box in result.boxes:
+                # box.cls is a tensor, convert to int
                 cls_id = int(box.cls[0])
                 
-                # If we have target classes, filter by them. 
-                # If we have NO target classes (standard model), detection does nothing (or we could debug-detect cars).
+                # Filter by target class
                 if cls_id in self.target_class_ids:
+                     # Get coordinates
                      x1, y1, x2, y2 = map(int, box.xyxy[0])
+                     
+                     # We could also retrieve box.id for temporal smoothing, 
+                     # but typically just rendering the tracked box is enough 
+                     # as the tracker stabilizes the box position.
                      boxes.append((x1, y1, x2, y2))
                 
         return boxes
